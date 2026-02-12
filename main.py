@@ -112,8 +112,15 @@ def send_weekly_summary():
 def main():
     print("Starting Trading Alert Server...")
     
-    # Send startup test email (optional, can be commented out after verification)
-    # send_email("Trading Alert Server Started", "The trading alert service has started successfully.")
+    # Check if this is a fresh install (state.json does not exist)
+    # CONFIG_FILE is defined in config.py, we need to import it or check manually
+    from config import CONFIG_FILE
+    
+    if not CONFIG_FILE.exists():
+        print("First run detected. Sending test email...")
+        send_email("Trading Alert Server Installed", "The trading alert service has been successfully installed and started.\n\nYou will receive alerts when indicators change color.")
+    else:
+        print("Existing configuration found. Skipping test email.")
     
     # Initial check on startup
     check_indicators()

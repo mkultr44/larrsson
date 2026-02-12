@@ -5,7 +5,7 @@ from datetime import datetime
 import traceback
 
 # Email Configuration
-SMTP_SERVER = "smtp.zoho.eu"
+SMTP_SERVER = "smtppro.zoho.eu"
 SMTP_PORT = 465
 SMTP_USER = "info@aralbruehl.de"
 SMTP_PASSWORD = "35gryuXW3h&e7*@%"
