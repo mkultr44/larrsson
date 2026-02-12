@@ -20,21 +20,57 @@ from email_notifier import send_email
 
 import ccxt
 import pandas as pd
+import yfinance as yf
 
 def fetch_generic_daily(exchange_id: str, symbol: str, limit: int = 100) -> pd.DataFrame:
     """
-    Generic fetcher for any CCXT exchange.
+    Generic fetcher for CCXT exchanges and Yahoo Finance.
     """
     try:
-        # Special handling for hyperliquid if needed, but ccxt should handle it
+        # Yahoo Finance Handling
+        if exchange_id == 'yahoo':
+            # yfinance uses 'history'
+            # limit in days roughly? yfinance takes period or start/end.
+            # We can approximate limit -> days. calling history(period='1y') is safe.
+            ticker = yf.Ticker(symbol)
+            # Fetch plenty of data to ensure we have enough for 300 candles (approx 1.5y)
+            # '2y' should be safe for daily candles.
+            df = ticker.history(period='2y')
+            
+            if df.empty:
+                raise ValueError(f"No data found for {symbol} on Yahoo Finance")
+                
+            # yfinance returns: Open, High, Low, Close, Volume, Dividends, Stock Splits
+            # Columns are capitalized.
+            df = df.rename(columns={
+                "Open": "open", 
+                "High": "high", 
+                "Low": "low", 
+                "Close": "close", 
+                "Volume": "volume"
+            })
+            
+            # Index is DatetimeIndex already (localized? often yes)
+            # Ensure naive timezone or utc to match ccxt (usually UTC timestamps or naive)
+            if df.index.tz is not None:
+                df.index = df.index.tz_convert(None)
+                
+            df.index.name = 'timestamp'
+            
+            # yfinance often returns the current unfinished day.
+            # We might want to keep it or drop it depending on preference.
+            # For now, keep it.
+            
+            return df.tail(limit)
+
+        # Special handling for hyperliquid if needed
         if exchange_id == 'hyperliquid' and 'HYPE' in symbol:
-             # Fallback to the specific function if needed or rely on ccxt
              pass
 
         exchange_class = getattr(ccxt, exchange_id)
         exchange = exchange_class({'enableRateLimit': True})
         
-        # CCXT expects symbols often in specific formats, UI should provide valid ones
+        # CCXT expects symbols often in specific formats
         ohlcv = exchange.fetch_ohlcv(symbol, timeframe='1d', limit=limit)
         
         df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])

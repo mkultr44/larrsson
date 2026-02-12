@@ -4,3 +4,4 @@ numpy
 schedule
 flask
 gunicorn
+yfinance

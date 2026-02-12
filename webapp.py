@@ -78,6 +78,31 @@ class MarketIndexer:
         # Hyperliquid is special in CCXT, check availability or add manually if needed
         # For now we stick to standard ccxt structure
         
+        # Curated list of non-crypto assets (Yahoo Finance)
+        self.curated_assets = [
+            # Commodities
+            {"symbol": "GC=F", "exchange": "yahoo", "base": "Gold", "quote": "USD", "type": "future"},
+            {"symbol": "SI=F", "exchange": "yahoo", "base": "Silver", "quote": "USD", "type": "future"},
+            {"symbol": "CL=F", "exchange": "yahoo", "base": "Crude Oil", "quote": "USD", "type": "future"},
+            # Indices
+            {"symbol": "^GSPC", "exchange": "yahoo", "base": "S&P 500", "quote": "USD", "type": "index"},
+            {"symbol": "^NDX", "exchange": "yahoo", "base": "Nasdaq 100", "quote": "USD", "type": "index"},
+            {"symbol": "^DJI", "exchange": "yahoo", "base": "Dow Jones", "quote": "USD", "type": "index"},
+            {"symbol": "^GDAXI", "exchange": "yahoo", "base": "DAX", "quote": "EUR", "type": "index"},
+            # Tech Stocks
+            {"symbol": "NVDA", "exchange": "yahoo", "base": "NVIDIA", "quote": "USD", "type": "stock"},
+            {"symbol": "TSLA", "exchange": "yahoo", "base": "Tesla", "quote": "USD", "type": "stock"},
+            {"symbol": "AAPL", "exchange": "yahoo", "base": "Apple", "quote": "USD", "type": "stock"},
+            {"symbol": "MSFT", "exchange": "yahoo", "base": "Microsoft", "quote": "USD", "type": "stock"},
+            {"symbol": "GOOGL", "exchange": "yahoo", "base": "Google", "quote": "USD", "type": "stock"},
+            {"symbol": "AMZN", "exchange": "yahoo", "base": "Amazon", "quote": "USD", "type": "stock"},
+            {"symbol": "META", "exchange": "yahoo", "base": "Meta", "quote": "USD", "type": "stock"},
+            # Others
+            {"symbol": "MSTR", "exchange": "yahoo", "base": "MicroStrategy", "quote": "USD", "type": "stock"},
+            {"symbol": "COIN", "exchange": "yahoo", "base": "Coinbase", "quote": "USD", "type": "stock"},
+            {"symbol": "EURUSD=X", "exchange": "yahoo", "base": "EUR", "quote": "USD", "type": "forex"},
+        ]
+        
     def start_indexing(self):
         t = threading.Thread(target=self._index_worker)
         t.daemon = True
@@ -87,6 +112,9 @@ class MarketIndexer:
         print("Starting market indexing...")
         self.is_loading = True
         all_markets = []
+        
+        # Add curated assets first
+        all_markets.extend(self.curated_assets)
         
         # Add Hyperliquid manually or via custom call if ccxt support is limited/different
         # CCXT supports hyperliquid now, let's try standard fetch
@@ -132,14 +160,26 @@ class MarketIndexer:
             if self.is_loading and not self.markets:
                 return [{"symbol": "Loading markets...", "exchange": "System", "description": "Please wait"}]
             
-            # Simple linear search - can be optimized
             results = []
             count = 0
             for m in self.markets:
-                if query in m['symbol'].upper().replace('/', ''):
+                # Search by symbol or base name
+                if query in m['symbol'].upper() or query in m['base'].upper():
                      results.append(m)
                      count += 1
                      if count >= 20: break
+            
+            # Always allow adding the raw query as a "Manual" Yahoo/Stock entry if it looks like a ticker
+            # This enables adding any stock not in the curated list
+            if count < 5 and len(query) > 1:
+                results.append({
+                    "symbol": query.upper(),
+                    "exchange": "yahoo",
+                    "type": "manual/stock",
+                    "base": "Manual Search",
+                    "quote": "?"
+                })
+                
             return results
 
 indexer = MarketIndexer()
