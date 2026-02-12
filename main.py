@@ -58,7 +58,7 @@ def check_indicators():
         
         try:
             # Fetch data
-            df = fetch_generic_daily(exchange, symbol, limit=50)
+            df = fetch_generic_daily(exchange, symbol, limit=300)
             
             # Calculate Indicator
             df = calculate_larsson_line(df)

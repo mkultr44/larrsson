@@ -304,10 +304,24 @@
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <span style="color: #787b86; font-size: 13px;">Price</span>
-                    <span style="font-weight: 500;">${{ asset.price }}</span>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 500; font-size: 16px;">${{ asset.price }}</div>
+                        <div style="font-size: 12px; font-weight: 500;"
+                            class="change-{{ 'positive' if asset.change_24h >= 0 else 'negative' }}">
+                            {{ '%.2f'|format(asset.change_24h) }}%
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Sparkline Chart -->
+                <div style="height: 60px; margin-top: 10px; margin-bottom: 5px;">
+                    <canvas id="chart-{{ asset.exchange }}-{{ asset.symbol|replace('/', '')|replace(':', '') }}"
+                        width="300" height="60" class="sparkline" data-history='{{ asset.history_7d|tojson }}'
+                        data-color="{{ 'positive' if asset.change_24h >= 0 else 'negative' }}"></canvas>
+                </div>
+
                 <div
-                    style="font-size: 11px; color: #434651; margin-top: 15px; border-top: 1px solid #2a2e39; padding-top: 10px;">
+                    style="font-size: 11px; color: #434651; margin-top: 10px; border-top: 1px solid #2a2e39; padding-top: 10px;">
                     Last Check: {{ asset.last_check }}
                 </div>
             </div>
