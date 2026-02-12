@@ -16,18 +16,24 @@ if ! dpkg -s python3-venv >/dev/null 2>&1; then
     apt-get install -y python3-venv
 fi
 
+echo "Stopping existing service..."
+systemctl stop tradingalert || true
+
+echo "Cleaning up previous installation..."
+if [ -d "$APP_DIR" ]; then
+    rm -rf "$APP_DIR"
+fi
+
 echo "Creating app directory at $APP_DIR..."
-mkdir -p $APP_DIR
+mkdir -p "$APP_DIR"
 
 echo "Copying files..."
 # Assumes script is run from the source directory containing the files
-cp -r ./* $APP_DIR/
+cp -r ./* "$APP_DIR/"
 
 echo "Setting up virtual environment..."
-cd $APP_DIR
-if [ ! -d "venv" ]; then
-    python3 -m venv venv
-fi
+cd "$APP_DIR"
+python3 -m venv venv
 
 echo "Installing Python requirements..."
 ./venv/bin/pip install --upgrade pip
