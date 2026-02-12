@@ -1,0 +1,15 @@
+[Unit]
+Description=Trading Alert Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/tradingalert
+ExecStart=/opt/tradingalert/venv/bin/python /opt/tradingalert/main.py
+Restart=always
+RestartSec=60
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
