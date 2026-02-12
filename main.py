@@ -66,10 +66,20 @@ def check_indicators():
             current_color = last_row['color']
             current_price = last_row['close']
             
-            print(f"{exchange.upper()} {symbol}: {current_color} (${current_price})")
+            # Calculate 24h Change
+            change_24h = 0.0
+            if len(df) >= 2:
+                prev_close = df.iloc[-2]['close']
+                change_24h = ((current_price - prev_close) / prev_close) * 100
+            
+            # Get last 7 days history (close prices)
+            # We want strictly the last 7 values for the graph
+            history_7d = df['close'].tail(30).tolist() # Take 30 to be safe/richer graph, front end can slice
+            
+            print(f"{exchange.upper()} {symbol}: {current_color} (${current_price}) {change_24h:.2f}%")
             
             # Update State
-            prev_color = update_asset_state(exchange, symbol, current_color, current_price)
+            prev_color = update_asset_state(exchange, symbol, current_color, current_price, change_24h, history_7d)
             
             # Alert if changed
             if prev_color and prev_color != current_color:

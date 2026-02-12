@@ -7,9 +7,10 @@
     <title>Trading Alert Dashboard</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a1a;
-            color: #e0e0e0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #131722;
+            /* TradingView Dark Background */
+            color: #d1d4dc;
             margin: 0;
             padding: 20px;
         }
@@ -24,69 +25,137 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
-            border-bottom: 1px solid #333;
             padding-bottom: 20px;
+            border-bottom: 1px solid #2a2e39;
         }
 
         h1 {
             margin: 0;
-            color: #ffa500;
+            color: #d1d4dc;
+            font-weight: 400;
+            font-size: 24px;
         }
 
         .logout-btn {
-            color: #aaa;
+            color: #787b86;
             text-decoration: none;
             padding: 8px 16px;
-            border: 1px solid #444;
             border-radius: 4px;
+            transition: color 0.2s;
+            background: none;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
         }
 
         .logout-btn:hover {
-            background-color: #333;
+            color: #d1d4dc;
         }
 
-        .add-asset-section {
-            background-color: #2d2d2d;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        /* Search Section */
+        .search-container {
+            position: relative;
+            margin-bottom: 30px;
         }
 
-        .form-row {
+        .search-input-wrapper {
             display: flex;
-            gap: 10px;
-        }
-
-        input,
-        select {
-            padding: 10px;
-            background-color: #333;
-            border: 1px solid #444;
-            color: #fff;
+            align-items: center;
+            background-color: #2a2e39;
+            border: 1px solid #363a45;
             border-radius: 4px;
+            padding: 10px 15px;
         }
 
-        input {
-            flex-grow: 1;
+        .search-icon {
+            color: #787b86;
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
         }
 
-        button.action-btn {
-            padding: 10px 20px;
+        .search-input {
+            background: none;
             border: none;
+            color: #d1d4dc;
+            width: 100%;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: #1e222d;
+            border: 1px solid #363a45;
             border-radius: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            margin-top: 5px;
+        }
+
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
             cursor: pointer;
+            border-bottom: 1px solid #2a2e39;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item:hover {
+            background-color: #2a2e39;
+        }
+
+        .item-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #dda15e;
+            /* Orange-ish bitcoin color */
+            border-radius: 50%;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #fff;
             font-weight: bold;
         }
 
-        .btn-primary {
-            background-color: #007acc;
-            color: white;
+        .item-info {
+            flex-grow: 1;
         }
 
-        .btn-primary:hover {
-            background-color: #0062a3;
+        .item-symbol {
+            font-weight: bold;
+            color: #d1d4dc;
+            font-size: 14px;
         }
 
+        .item-desc {
+            color: #787b86;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .item-exchange {
+            color: #787b86;
+            font-size: 12px;
+            background-color: #2a2e39;
+            padding: 2px 6px;
+            border-radius: 2px;
+            margin-left: 10px;
+        }
+
+        /* Asset Grid */
         .assets-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -94,7 +163,8 @@
         }
 
         .asset-card {
-            background-color: #2d2d2d;
+            background-color: #1e222d;
+            border: 1px solid #2a2e39;
             border-radius: 8px;
             padding: 20px;
             position: relative;
@@ -102,7 +172,9 @@
 
         .asset-card h3 {
             margin-top: 0;
-            color: #fff;
+            margin-bottom: 5px;
+            color: #d1d4dc;
+            font-weight: 500;
         }
 
         .status-badge {
@@ -110,27 +182,29 @@
             padding: 4px 8px;
             border-radius: 4px;
             font-weight: bold;
-            color: #1a1a1a;
+            color: #131722;
             text-transform: uppercase;
-            font-size: 0.8rem;
+            font-size: 11px;
         }
 
         .status-orange {
             background-color: #ffa500;
+            color: black;
         }
 
         .status-silver {
-            background-color: #c0c0c0;
+            background-color: #b2b5be;
+            color: black;
         }
 
         .status-navy {
-            background-color: #000080;
+            background-color: #2962ff;
             color: white;
         }
 
         .status-unknown {
-            background-color: #444;
-            color: #ccc;
+            background-color: #434651;
+            color: #b2b5be;
         }
 
         .delete-btn {
@@ -139,18 +213,54 @@
             right: 15px;
             background: none;
             border: none;
-            color: #ff4444;
+            color: #5d606b;
             cursor: pointer;
-            font-size: 1.2rem;
+            font-size: 18px;
         }
 
         .delete-btn:hover {
-            color: #ff0000;
+            color: #f23645;
         }
 
         .trigger-check {
-            margin-top: 20px;
+            margin-top: 40px;
             text-align: center;
+        }
+
+        .btn-primary {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            background-color: #2962ff;
+            color: white;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            background-color: #1e53e5;
+        }
+
+        /* Loading Spinner */
+        .loader {
+            border: 2px solid #363a45;
+            border-top: 2px solid #2962ff;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
@@ -159,19 +269,24 @@
     <div class="container">
         <header>
             <h1>Trading Alert Dashboard</h1>
-            <a href="/logout" class="logout-btn">Logout</a>
+            <div style="display: flex; gap: 10px;">
+                <button class="logout-btn" onclick="changePassword()">Change Password</button>
+                <a href="/logout" class="logout-btn">Logout</a>
+            </div>
         </header>
 
-        <div class="add-asset-section">
-            <h3>Add New Asset</h3>
-            <div class="form-row">
-                <select id="new-exchange">
-                    <option value="binance">Binance</option>
-                    <option value="hyperliquid">Hyperliquid</option>
-                    <option value="bybit">Bybit</option>
-                </select>
-                <input type="text" id="new-symbol" placeholder="Symbol (e.g. BTC/USDT or HYPE/USDC:USDC)">
-                <button class="action-btn btn-primary" onclick="addAsset()">Add Asset</button>
+        <div class="search-container">
+            <div class="search-input-wrapper">
+                <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text" class="search-input" id="search-input" placeholder="Search (e.g. BTC)"
+                    autocomplete="off">
+            </div>
+            <div class="search-results" id="search-results">
+                <!-- Results populated by JS -->
             </div>
         </div>
 
@@ -181,17 +296,18 @@
                 <button class="delete-btn"
                     onclick="deleteAsset('{{ asset.exchange }}', '{{ asset.symbol }}')">&times;</button>
                 <h3>{{ asset.symbol }}</h3>
-                <p style="color: #aaa; margin-bottom: 10px;">{{ asset.exchange|upper }}</p>
+                <p style="color: #787b86; margin-bottom: 15px; font-size: 12px;">{{ asset.exchange|upper }}</p>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                    <span>Status:</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="color: #787b86; font-size: 13px;">Status</span>
                     <span class="status-badge status-{{ asset.color }}">{{ asset.color }}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <span>Price:</span>
-                    <span>${{ asset.price }}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="color: #787b86; font-size: 13px;">Price</span>
+                    <span style="font-weight: 500;">${{ asset.price }}</span>
                 </div>
-                <div style="font-size: 0.8rem; color: #666; margin-top: 10px;">
+                <div
+                    style="font-size: 11px; color: #434651; margin-top: 15px; border-top: 1px solid #2a2e39; padding-top: 10px;">
                     Last Check: {{ asset.last_check }}
                 </div>
             </div>
@@ -199,16 +315,107 @@
         </div>
 
         <div class="trigger-check">
-            <button class="action-btn btn-primary" onclick="triggerCheck()">Result Refresh / Trigger Check Now</button>
+            <button class="btn-primary" onclick="triggerCheck()">Refresh Data</button>
         </div>
     </div>
 
     <script>
-        function addAsset() {
-            const exchange = document.getElementById('new-exchange').value;
-            const symbol = document.getElementById('new-symbol').value;
-            if (!symbol) return;
+        // --- Search Logic ---
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+        let debounceTimer;
 
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            const query = e.target.value.trim();
+
+            if (query.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetch('/api/search_assets?q=' + encodeURIComponent(query))
+                    .then(res => res.json())
+                    .then(data => {
+                        searchResults.innerHTML = '';
+                        if (data.length > 0) {
+                            searchResults.style.display = 'block';
+                            data.forEach(item => {
+                                const div = document.createElement('div');
+                                div.className = 'search-result-item';
+                                div.innerHTML = `
+                                    <div class="item-icon">${item.symbol[0]}</div>
+                                    <div class="item-info">
+                                        <div class="item-symbol">${item.symbol}</div>
+                                        <div class="item-desc">${item.base}/${item.quote} • ${item.type}</div>
+                                    </div>
+                                    <div class="item-exchange">${item.exchange.toUpperCase()}</div>
+                                `;
+                                div.onclick = () => addAsset(item.exchange, item.symbol);
+                                searchResults.appendChild(div);
+                            });
+                        } else {
+                            searchResults.style.display = 'none';
+                        }
+                    });
+            }, 300);
+        });
+
+        // Close search on click outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+
+        // --- Chart Rendering ---
+        function renderSparklines() {
+            const canvases = document.querySelectorAll('.sparkline');
+            canvases.forEach(canvas => {
+                const ctx = canvas.getContext('2d');
+                const history = JSON.parse(canvas.dataset.history);
+                const isPositive = canvas.dataset.color === 'positive';
+                const color = isPositive ? '#089981' : '#f23645';
+                const width = canvas.width;
+                const height = canvas.height;
+
+                if (!history || history.length < 2) return;
+
+                // Normalization
+                const min = Math.min(...history);
+                const max = Math.max(...history);
+                const range = max - min || 1;
+
+                // Padding
+                const padding = 5;
+                const drawHeight = height - (padding * 2);
+
+                ctx.clearRect(0, 0, width, height);
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+
+                const step = width / (history.length - 1);
+
+                history.forEach((val, i) => {
+                    const x = i * step;
+                    const normalizedVal = (val - min) / range;
+                    // Canvas y is inverted (0 is top)
+                    const y = height - padding - (normalizedVal * drawHeight);
+
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+
+                ctx.stroke();
+            });
+        }
+
+        // Render on load
+        window.addEventListener('load', renderSparklines);
+
+        function addAsset(exchange, symbol) {
             fetch('/api/add_asset', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -237,6 +444,24 @@
                         setTimeout(() => window.location.reload(), 5000);
                     }
                 });
+        }
+
+        function changePassword() {
+            const newPass = prompt("Enter new password:");
+            if (newPass) {
+                fetch('/api/change_password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ new_password: newPass })
+                }).then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("Password changed successfully.");
+                        } else {
+                            alert("Error: " + (data.error || "Unknown error"));
+                        }
+                    });
+            }
         }
     </script>
 </body>

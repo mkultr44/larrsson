@@ -74,7 +74,7 @@ def remove_asset(exchange: str, symbol: str) -> None:
         
     save_data(data)
 
-def update_asset_state(exchange: str, symbol: str, color: str, price: float) -> Optional[str]:
+def update_asset_state(exchange: str, symbol: str, color: str, price: float, change_24h: Optional[float] = None, history_7d: Optional[List[float]] = None) -> Optional[str]:
     """
     Update state for an asset and return previous color if changed.
     """
@@ -83,11 +83,19 @@ def update_asset_state(exchange: str, symbol: str, color: str, price: float) -> 
     
     previous_color = data["state"].get(key, {}).get("color")
     
-    data["state"][key] = {
+    state_entry = {
         "color": color,
         "price": price,
         "last_check": datetime.now().isoformat()
     }
+    
+    if change_24h is not None:
+        state_entry["change_24h"] = change_24h
+        
+    if history_7d is not None:
+        state_entry["history_7d"] = history_7d
+    
+    data["state"][key] = state_entry
     
     save_data(data)
     
@@ -98,3 +106,14 @@ def update_asset_state(exchange: str, symbol: str, color: str, price: float) -> 
 def get_current_status() -> Dict:
     """Get current status/state of all assets."""
     return load_data()["state"]
+
+def get_admin_password() -> str:
+    """Get admin password."""
+    data = load_data()
+    return data.get("admin_password", "password123")
+
+def set_admin_password(password: str) -> None:
+    """Set admin password."""
+    data = load_data()
+    data["admin_password"] = password
+    save_data(data)
