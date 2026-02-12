@@ -1,83 +1,100 @@
 """
 Configuration and state persistence for Trading Alert Server.
-Stores last known colors for each exchange to detect changes.
+Stores configured assets and their last known states.
 """
 import json
 import os
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from datetime import datetime
 
 # Config file path
-# Stores state.json in the same directory as the script
 CONFIG_DIR = Path(__file__).parent
 CONFIG_FILE = CONFIG_DIR / 'state.json'
+DEFAULT_ASSETS = [
+    {"exchange": "binance", "symbol": "BTC/USDT"},
+    {"exchange": "hyperliquid", "symbol": "HYPE/USDC:USDC"}
+]
 
-
-def load_state() -> Dict:
-    """
-    Load saved state from config file.
-    """
+def load_data() -> Dict:
+    """Load all data (assets and state) from json."""
     if CONFIG_FILE.exists():
         try:
             with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                data = json.load(f)
+                # Ensure assets key exists
+                if "assets" not in data:
+                    data["assets"] = DEFAULT_ASSETS
+                if "state" not in data:
+                    data["state"] = {}
+                return data
         except (json.JSONDecodeError, IOError):
             pass
     
-    # Default state
     return {
-        "binance": {"color": None, "last_check": None},
-        "hyperliquid": {"color": None, "last_check": None}
+        "assets": DEFAULT_ASSETS,
+        "state": {}
     }
 
-
-def save_state(state: Dict) -> None:
-    """Save state to config file."""
+def save_data(data: Dict) -> None:
+    """Save data to json."""
     try:
         with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-            json.dump(state, f, indent=2)
+            json.dump(data, f, indent=2)
     except Exception as e:
-        print(f"Error saving state: {e}")
+        print(f"Error saving data: {e}")
 
+def get_assets() -> List[Dict]:
+    """Get list of configured assets."""
+    data = load_data()
+    return data["assets"]
 
-def update_exchange_color(exchange: str, color: str, price: Optional[float] = None) -> Optional[str]:
-    """
-    Update color for an exchange and return previous color if changed.
+def add_asset(exchange: str, symbol: str) -> None:
+    """Add a new asset."""
+    data = load_data()
+    # Check if already exists
+    for asset in data["assets"]:
+        if asset["exchange"] == exchange and asset["symbol"] == symbol:
+            return
     
-    Args:
-        exchange: Exchange name ('binance' or 'hyperliquid')
-        color: New color ('orange', 'silver', or 'navy')
-        price: Current price (optional)
+    data["assets"].append({"exchange": exchange, "symbol": symbol})
+    save_data(data)
+
+def remove_asset(exchange: str, symbol: str) -> None:
+    """Remove an asset."""
+    data = load_data()
+    data["assets"] = [
+        a for a in data["assets"] 
+        if not (a["exchange"] == exchange and a["symbol"] == symbol)
+    ]
+    # Also clean up state
+    key = f"{exchange}_{symbol}"
+    if key in data["state"]:
+        del data["state"][key]
         
-    Returns:
-        Previous color if it changed, None otherwise
+    save_data(data)
+
+def update_asset_state(exchange: str, symbol: str, color: str, price: float) -> Optional[str]:
     """
-    state = load_state()
+    Update state for an asset and return previous color if changed.
+    """
+    data = load_data()
+    key = f"{exchange}_{symbol}"
     
-    previous_color = state.get(exchange, {}).get("color")
+    previous_color = data["state"].get(key, {}).get("color")
     
-    exchange_data = {
+    data["state"][key] = {
         "color": color,
+        "price": price,
         "last_check": datetime.now().isoformat()
     }
     
-    if price is not None:
-        exchange_data["price"] = price
-        
-    state[exchange] = exchange_data
-    
-    save_state(state)
+    save_data(data)
     
     if previous_color is not None and previous_color != color:
         return previous_color
-    
     return None
 
 def get_current_status() -> Dict:
-    """Get current status of all exchanges."""
-    state = load_state()
-    return {
-        "binance": state.get("binance", {}),
-        "hyperliquid": state.get("hyperliquid", {})
-    }
+    """Get current status/state of all assets."""
+    return load_data()["state"]

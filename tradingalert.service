@@ -1,12 +1,13 @@
 [Unit]
-Description=Trading Alert Service
+Description=Trading Alert Web Service
 After=network.target
 
 [Service]
 Type=simple
 User=root
 WorkingDirectory=/opt/tradingalert
-ExecStart=/opt/tradingalert/venv/bin/python /opt/tradingalert/main.py
+# bind to localhost:5000, Nginx proxies to it
+ExecStart=/opt/tradingalert/venv/bin/gunicorn --workers 1 --bind 127.0.0.1:5000 "webapp:create_app()"
 Restart=always
 RestartSec=60
 Environment=PYTHONUNBUFFERED=1
