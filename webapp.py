@@ -103,6 +103,9 @@ class MarketIndexer:
             {"symbol": "EURUSD=X", "exchange": "yahoo", "base": "EUR", "quote": "USD", "type": "forex"},
         ]
         
+        # Initialize with curated so they are available immediately
+        self.markets = list(self.curated_assets)
+        
     def start_indexing(self):
         t = threading.Thread(target=self._index_worker)
         t.daemon = True
@@ -111,15 +114,16 @@ class MarketIndexer:
     def _index_worker(self):
         print("Starting market indexing...")
         self.is_loading = True
-        all_markets = []
         
-        # Add curated assets first
-        all_markets.extend(self.curated_assets)
+        # We already have curated assets in self.markets
+        # We will append crypto markets as we go or in batch
         
         # Add Hyperliquid manually or via custom call if ccxt support is limited/different
         # CCXT supports hyperliquid now, let's try standard fetch
         # but mix in explicit list if needed.
         exchanges = self.exchanges_to_index + ['hyperliquid']
+        
+        all_new_markets = []
         
         for ex_name in exchanges:
             try:
@@ -128,11 +132,13 @@ class MarketIndexer:
                     
                 exchange = getattr(ccxt, ex_name)()
                 try:
+                    # Set timeout
+                    exchange.timeout = 10000 
                     markets = exchange.load_markets()
                     # Flatten to list
                     for symbol, data in markets.items():
                         # We want: symbol, exchange, type (spot/swap)
-                        all_markets.append({
+                        all_new_markets.append({
                             "symbol": symbol,
                             "exchange": ex_name,
                             "type": data.get('type', 'spot'),
@@ -147,9 +153,11 @@ class MarketIndexer:
                 print(f"Error init exchange {ex_name}: {e}")
                 
         with self.lock:
-            self.markets = all_markets
+            # Merge curated with new markets
+            self.markets = self.curated_assets + all_new_markets
             self.is_loading = False
-        print(f"Market indexing complete. {len(self.markets)} markets found.")
+            
+        print(f"Market indexing complete. Total {len(self.markets)} markets.")
 
     def search(self, query):
         query = query.upper()
@@ -157,7 +165,10 @@ class MarketIndexer:
             return []
             
         with self.lock:
+            # If still loading but we have curated assets, allow search!
+            # Only return loading if we truly have nothing
             if self.is_loading and not self.markets:
+                 # Should not happen given init, but safety
                 return [{"symbol": "Loading markets...", "exchange": "System", "description": "Please wait"}]
             
             results = []
